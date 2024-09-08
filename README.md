@@ -7,4 +7,4 @@ Easy extraction of LNK files to json or jsonl
 - Optional output as json or jsonl
 
 usage: lnk2j.py [-h] -i INPUT  [-f {json,jsonl}] [-o OUTPUT] <br>
-required: -i/--input (file or directory
+required: -i/--input (file or directory)
