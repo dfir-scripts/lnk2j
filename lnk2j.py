@@ -6,8 +6,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from LnkParse3.lnk_file import LnkFile
 
-
-def parse_lnk_file(file_path):
+def parse_lnk_file(file_path, base_path):
     with open(file_path, 'rb') as f:
         lnk = LnkFile(f)
         lnk_data = lnk.get_json()
@@ -22,9 +21,12 @@ def parse_lnk_file(file_path):
         source_modified = source_modified[:-2] + ':' + source_modified[-2:]
         source_accessed = source_accessed[:-2] + ':' + source_accessed[-2:]
 
+        # Calculate the relative path from the parent of the base path
+        relative_path = os.path.relpath(file_path, start=base_path.parent)
+
         # Add a dictionary to the beginning and merge with LNK data
         output_data = {
-            'SourceFile': str(file_path),
+            'SourceFile': relative_path,
             'SourceCreated': source_created,
             'SourceModified': source_modified,
             'SourceAccessed': source_accessed,
@@ -32,27 +34,27 @@ def parse_lnk_file(file_path):
         }
         return output_data
 
-def traverse_directory(directory):
+def traverse_directory(directory, base_path):
     results = []
     path = Path(directory)
     for file_path in path.rglob('*.lnk'):
         try:
-            lnk_data = parse_lnk_file(file_path)
+            lnk_data = parse_lnk_file(file_path, base_path)
             results.append(lnk_data)
-        except Exception:
+        except Exception as e:
             print(f"Error parsing {file_path}: {e}")
     return results
 
 def process_input_path(input_path):
     results = []
-    path = Path(input_path)
+    path = Path(input_path).resolve()  # Resolve to absolute path
     if path.is_dir():
-        results = traverse_directory(input_path)
+        results = traverse_directory(path, path)
     elif path.is_file() and path.suffix == '.lnk':
         try:
-            lnk_data = parse_lnk_file(input_path)
+            lnk_data = parse_lnk_file(path, path.parent)
             results.append(lnk_data)
-        except Exception:
+        except Exception as e:
             print(f"Error parsing {input_path}: {e}")
     else:
         print(f"Invalid input path: {input_path}. Must be a directory or a .lnk file.")
